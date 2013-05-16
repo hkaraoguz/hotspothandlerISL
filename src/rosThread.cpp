@@ -12,6 +12,7 @@
 RosThread::RosThread()
 {
     shutdown = false;
+    this->currentState = HS_IDLE;
 
 }
 
@@ -79,73 +80,12 @@ void RosThread::work(){
     while(ros::ok())
     {
         ros::spinOnce();
+
+        this->manageHotspot();
+
+
         loop.sleep();
 
-        // If all the data is received from the robots
-        if(dataReceived[1] && dataReceived[2] && dataReceived[3])
-        {
-
-            // Play Game
-            coordinator.playGame(adjM,adjM,bin);
-
-            // Prepare the output string
-            QString networkString;
-
-            // For all the rows of the matrix
-            for(int i = 1; i <=numOfRobots; i++)
-            {
-
-                // If the robot is active
-                if(dataReceived[i])
-                {
-                    int neighborCount = 0;
-
-                    // Search the entire row
-                    for(int j = 1; j <=numOfRobots; j++)
-                    {
-                        // If a neighborhood is present, fill the message
-                        if(adjM[i][j] == 1)
-                        {
-                            neighborCount++;
-
-                            qDebug()<<"adjm ok "<<i<<" "<<j;
-
-                            QString str = "IRobot";
-
-                            str.append(QString::number(j));
-
-                            if(networkString.size() > 0 && networkString.at(networkString.size()-1) != ',')
-                                networkString.append(";");
-
-
-                            networkString.append(str);
-
-
-                        }
-                    }
-
-                    dataReceived[i] = false;
-
-                    if(neighborCount > 0)
-
-                        networkString.append(",");
-
-                    else
-                    {
-                        networkString.append("0");
-                        networkString.append(",");
-                    }
-                }
-            }
-
-            networkString.truncate(networkString.size()-1);
-
-            navigationISL::networkInfo info;
-
-            info.network = networkString.toStdString();
-
-            networkinfoPublisher.publish(info);
-        }
 
 
     }
@@ -174,10 +114,54 @@ void RosThread::clearCheckedList()
 }
 void RosThread::manageHotspot()
 {
+    int hotspotId = this->getHotspot(timeoutHotspot);
+
+    if(hotspotId >= 0 || this->currentState != HS_IDLE)
+    {
+        if(helpRequesterID > 0)
+        {
+
+
+            navigationISL::helpMessage helpMessage;
+
+            helpMessage.robotid = helpRequesterID;
+            helpMessage.messageid = HMT_NOT_HELPING;
+
+            helpRequesterID = -1;
+
+            this->messageOut.publish(helpMessage);
+
+            return;
+
+
+        }
+    }
+    else
+    {
+        if(helpRequesterID > 0 && this->currentState == HS_IDLE)
+        {
+
+
+            navigationISL::helpMessage helpMessage;
+
+            helpMessage.robotid = helpRequesterID;
+            helpMessage.messageid = HMT_HELPING;
+
+            this->currentState = HS_HELPING;
+
+            //helpRequesterID = -1;
+
+            this->messageOut.publish(helpMessage);
+
+            return;
+
+
+        }
+
+    }
 
     if(this->currentState != HS_WAITING_FOR_RESPONSE)
     {
-        int hotspotId = this->getHotspot(timeoutHotspot);
 
         // Check if we have any hotspot waiting
         if(hotspotId >= 0)
@@ -194,8 +178,9 @@ void RosThread::manageHotspot()
                     helperID = tempId;
                     navigationISL::helpMessage helpMessage;
 
-                    helpMessage.robotid = this->robot.robotID;
+                    helpMessage.robotid = helperID;
                     helpMessage.messageid = HMT_HELP_REQUEST;
+
 
                     this->messageOut.publish(helpMessage);
 
@@ -215,6 +200,7 @@ void RosThread::manageHotspot()
             }
 
         }
+
     }
     // We are waiting for a response
     else if(this->currentState == HS_WAITING_FOR_RESPONSE)
@@ -253,6 +239,7 @@ void RosThread::manageHotspot()
     else if(this->currentState == HS_WAITING_FOR_HELP)
     {
         uint currentTime = QDateTime::currentDateTime().toTime_t();
+
         if(currentTime - waitingStartTime > waitingDuration)
         {
             int tempId = this->findHelper();
@@ -262,7 +249,7 @@ void RosThread::manageHotspot()
                 helperID = tempId;
                 navigationISL::helpMessage helpMessage;
 
-                helpMessage.robotid = this->robot.robotID;
+                helpMessage.robotid = helperID;
                 helpMessage.messageid = HMT_HELP_REQUEST;
 
                 this->messageOut.publish(helpMessage);
@@ -271,6 +258,9 @@ void RosThread::manageHotspot()
 
                 return;
             }
+
+            waitingStartTime = currentTime;
+
         }
     }
 }
