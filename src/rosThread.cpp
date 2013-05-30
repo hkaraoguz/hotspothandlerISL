@@ -389,6 +389,11 @@ void RosThread::handleNeighborInfo(navigationISL::neighborInfo info)
                         bin[i][2] = 0;
                         bin[i][3] = 0;
                     }
+                    else if(i == ids.at(j))
+                    {
+                        bin[i][3] = 10;
+                        /// BIN DOLDURALACAK
+                    }
 
                 }
 
