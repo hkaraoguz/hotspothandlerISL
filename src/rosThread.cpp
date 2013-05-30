@@ -114,7 +114,11 @@ void RosThread::clearCheckedList()
 }
 void RosThread::manageHotspot()
 {
-    int hotspotId = this->getHotspot(timeoutHotspot);
+    int hotspotId = -1;
+    if (this->currentState == HS_IDLE)
+    {
+        hotspotId = this->getHotspot(timeoutHotspot);
+    }
 
     if(hotspotId >= 0 || this->currentState != HS_IDLE)
     {
@@ -150,6 +154,8 @@ void RosThread::manageHotspot()
             this->currentState = HS_HELPING;
 
             //helpRequesterID = -1;
+
+            helpStartTime = QDateTime::currentDateTime().toTime_t();
 
             this->messageOut.publish(helpMessage);
 
@@ -219,18 +225,22 @@ void RosThread::manageHotspot()
             {
                 this->currentState = HS_HANDLING_HOTSPOT;
 
+                helpStartTime = QDateTime::currentDateTime().toTime_t();
+
                 clearCheckedList();
             }
 
         }
 
     }
-    else if(this->currentState == HS_HANDLING_HOTSPOT)
+    else if(this->currentState == HS_HANDLING_HOTSPOT || this->currentState == HS_HELPING)
     {
         uint currentTime = QDateTime::currentDateTime().toTime_t();
         if(currentTime - helpStartTime > handlingDuration)
         {
             /// HOTSPOT KAYDEDILECEK
+            hotspotList.remove(0);
+
             this->currentState = HS_IDLE;
         }
 
@@ -286,7 +296,7 @@ int RosThread::getHotspot(uint timeout)
     }
     return -1;
 }
-void RosThread::findHelper()
+int RosThread::findHelper()
 {
     int minID = -1;
     for(int i = 1; i <= numOfRobots;i++)
@@ -318,9 +328,9 @@ void RosThread::findHelper()
 void RosThread::handleNeighborInfo(navigationISL::neighborInfo info)
 {
     QString str = QString::fromStdString(info.name);
-  /*  navigationISL::neighborInfo inf = info;
+    navigationISL::neighborInfo inf = info;
 
-    QString str = QString::fromStdString(inf.name);
+  /*  QString str = QString::fromStdString(inf.name);
 
     str.remove("IRobot");
 
@@ -400,12 +410,12 @@ void RosThread::handleNeighborInfo(navigationISL::neighborInfo info)
 
     if(num > 0 && num < numOfRobots){
 
-        bin[num][1] = neighborInfo.posX;
-        bin[num][2] = neighborInfo.posY;
-        bin[num][3] = neighborInfo.radius;
+        bin[num][1] = inf.posX;
+        bin[num][2] = inf.posY;
+        bin[num][3] = inf.radius;
 
-        bt[num][1] = neighborInfo.targetX;
-        bt[num][2] = neighborInfo.targetY;
+        //bt[num][1] = neighborInfo.targetX;
+        //bt[num][2] = neighborInfo.targetY;
         qDebug()<<"robot number "<<num;
     }
     else qDebug()<<"Unknown robot id number";
@@ -417,7 +427,7 @@ void RosThread::handleHotspotMessage(navigationISL::hotspot msg)
     hotspotList.push_back(msg.hotspot);
 
 }
-void RosThread::handlePositionInfo(const geometry_msgs::PoseWithCovarianceStamped_::ConstPtr &msg)
+void RosThread::handlePositionInfo(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
 {
     bin[robot.robotID][1] = msg->pose.pose.position.x*100;
     bin[robot.robotID][2] = msg->pose.pose.position.y*100;
