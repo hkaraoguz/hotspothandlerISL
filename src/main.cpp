@@ -11,7 +11,7 @@ int main(int argc,char** argv){
 
 
 
-    ros::init(argc,argv,"coordinatorISL");
+    ros::init(argc,argv,"hotspothandlerISL");
 
     RosThread* rosthread  = new RosThread;
 
