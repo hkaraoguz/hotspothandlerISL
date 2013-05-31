@@ -13,6 +13,8 @@ RosThread::RosThread()
 {
     shutdown = false;
     this->currentState = HS_IDLE;
+    helperID = -1;
+    helpRequesterID = -1;
 
 }
 
@@ -120,7 +122,7 @@ void RosThread::manageHotspot()
         hotspotId = this->getHotspot(timeoutHotspot);
     }
 
-    if(hotspotId >= 0 || this->currentState != HS_IDLE)
+    if(this->currentState != HS_IDLE)
     {
         if(helpRequesterID > 0)
         {
@@ -153,7 +155,7 @@ void RosThread::manageHotspot()
 
             this->currentState = HS_HELPING;
 
-            //helpRequesterID = -1;
+            helpRequesterID = -1;
 
             helpStartTime = QDateTime::currentDateTime().toTime_t();
 
@@ -166,16 +168,14 @@ void RosThread::manageHotspot()
 
     }
 
-    if(this->currentState != HS_WAITING_FOR_RESPONSE)
+    if(this->currentState == HS_IDLE)
     {
 
         // Check if we have any hotspot waiting
         if(hotspotId >= 0)
         {
 
-            // If I am available
-            if(this->currentState == HS_IDLE)
-            {
+
 
                 int tempId = this->findHelper();
 
@@ -203,7 +203,7 @@ void RosThread::manageHotspot()
                 }
 
 
-            }
+
 
         }
 
@@ -240,7 +240,7 @@ void RosThread::manageHotspot()
         {
             /// HOTSPOT KAYDEDILECEK
             hotspotList.remove(0);
-
+            helperID = -1;
             this->currentState = HS_IDLE;
         }
 
@@ -249,6 +249,17 @@ void RosThread::manageHotspot()
     else if(this->currentState == HS_WAITING_FOR_HELP)
     {
         uint currentTime = QDateTime::currentDateTime().toTime_t();
+
+
+
+        if(currentTime - hotspotList.at(0) > timeoutHotspot)
+        {
+            hotspotList.remove(0);
+            this->currentState = HS_IDLE;
+
+            return;
+            /// HOTSPOT KAYIT OLACAK
+        }
 
         if(currentTime - waitingStartTime > waitingDuration)
         {
