@@ -99,6 +99,8 @@ private:
 
      bool readInitialPoses(QString filepath);
 
+     bool readConfigFile(QString filename);
+
      double bin[numOfRobots+1][4];// positions including itself
 
      int adjM[numOfRobots+1][numOfRobots+1];

@@ -15,6 +15,10 @@ RosThread::RosThread()
     this->currentState = HS_IDLE;
     helperID = -1;
     helpRequesterID = -1;
+    for(int i = 1; i < numOfRobots+1;i++){
+
+        checkedNeighborList[i] = 1;
+    }
 
 }
 
@@ -23,10 +27,22 @@ RosThread::RosThread()
 void RosThread::work(){
 
 
+    QString pathConf = QDir::homePath();
+    pathConf.append("/fuerte_workspace/sandbox/configISL.json");
+
+    if(!readConfigFile(pathConf)){
+
+        qDebug()<< "Read Config File Failed!!!";
+
+        ros::shutdown();
+
+        emit rosFinished();
+
+        return;
+    }
 
     QString path;
     path.append("../initialPoses.txt");
-
     // Read initial poses otherwise quit!!
     if(!readInitialPoses(path))
     {
@@ -76,7 +92,7 @@ void RosThread::work(){
 
     hotspotSubscriber = n.subscribe("hotspotobserverISL/hotspot",5,&RosThread::handleHotspotMessage,this);
 
-    messageIn = n.subscribe("communicationISL/hotspothandlerMessage",5,&RosThread::handleIncomingMessage,this);
+    messageIn = n.subscribe("communicationISL/hotspothandlerMessageIn",5,&RosThread::handleIncomingMessage,this);
     messageOut = n.advertise<navigationISL::helpMessage>("hotspothandlerISL/outMessage",5);
 
     while(ros::ok())
@@ -111,7 +127,7 @@ void RosThread::clearCheckedList()
 {
     for(int i = 0; i <=numOfRobots; i++)
     {
-        checkedNeighborList[i] = 0;
+        checkedNeighborList[i] = 1;
     }
 }
 void RosThread::manageHotspot()
@@ -297,6 +313,7 @@ int RosThread::getHotspot(uint timeout)
         {
             firstSize--;
             hotspotList.remove(i);
+            i = 0;
             /// HOTSPOT SAVER YAZILACAK BURAYA SILINEN HOTSPOT KAYDEDILECEK TARIHI ILE
         }
         else
@@ -498,4 +515,54 @@ bool RosThread::readInitialPoses(QString filepath)
     file.close();
 
     return true;
+}
+
+
+// Reads the config file
+bool RosThread::readConfigFile(QString filename)
+{
+    QFile file(filename);
+
+    if(!file.exists()) return false;
+
+    if(!file.open(QFile::ReadOnly)) return false;
+
+    QJson::Parser parser;
+
+    bool ok;
+
+    QVariantMap result = parser.parse(&file,&ok).toMap();
+
+    if(!ok){
+
+        file.close();
+        qDebug()<<"Fatal reading error";
+
+        return false;
+    }
+    else
+    {
+
+        robot.robotID = result["robotID"].toInt();
+
+        qDebug()<<result["robotID"].toString();
+
+        this->robot.initialX = result["initialX"].toDouble();
+
+        this->robot.initialY = result["initialY"].toDouble();
+
+        this->robot.targetX = result["targetX"].toDouble();
+
+        qDebug()<<result["targetX"].toString();
+
+        this->robot.targetY = result["targetY"].toDouble();
+
+        qDebug()<<result["targetY"].toString();
+
+    }
+    file.close();
+    return true;
+
+
+
 }
