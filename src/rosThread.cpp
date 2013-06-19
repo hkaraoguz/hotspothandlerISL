@@ -561,6 +561,14 @@ bool RosThread::readConfigFile(QString filename)
     }
     else
     {
+        handlingDuration = result["handlingDuration"].toInt();
+        qDebug()<<result["handlingDuration"].toString();
+
+        waitingDuration = result["waitingDuration"].toInt();
+        qDebug()<<result["waitingDuration"].toString();
+
+        timeoutHotspot = result["timeoutHotspot"].toInt();
+        qDebug()<<result["timeoutHotspot"].toString();
 
         robot.robotID = result["robotID"].toInt();
 
