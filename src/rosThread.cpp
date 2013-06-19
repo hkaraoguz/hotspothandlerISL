@@ -169,7 +169,10 @@ void RosThread::manageHotspot()
             helpMessage.robotid = helpRequesterID;
             helpMessage.messageid = HMT_HELPING;
 
+
+            qDebug()<<"1Current state :"<<this->currentState;
             this->currentState = HS_HELPING;
+            qDebug()<<"1Next state :"<<this->currentState;
 
             helpRequesterID = -1;
 
@@ -203,10 +206,11 @@ void RosThread::manageHotspot()
                     helpMessage.robotid = helperID;
                     helpMessage.messageid = HMT_HELP_REQUEST;
 
-
                     this->messageOut.publish(helpMessage);
 
+                    qDebug()<<"2Current state :"<<this->currentState;
                     this->currentState = HS_WAITING_FOR_RESPONSE;
+                    qDebug()<<"2Next state :"<<this->currentState;
 
                     return;
                 }
@@ -214,7 +218,9 @@ void RosThread::manageHotspot()
                 {
                     waitingStartTime = QDateTime::currentDateTime().toTime_t();
 
-                    this->currentState == HS_WAITING_FOR_HELP;
+                    qDebug()<<"3Current state :"<<this->currentState;
+                    this->currentState = HS_WAITING_FOR_HELP;
+                    qDebug()<<"3Next state :"<<this->currentState;
 
                 }
 
@@ -232,14 +238,18 @@ void RosThread::manageHotspot()
         if(currentTime - hotspotList.at(0) > timeoutHotspot)
         {
             hotspotList.remove(0);
+            qDebug()<<"4Current state :"<<this->currentState;
             this->currentState = HS_IDLE;
+            qDebug()<<"4Next state :"<<this->currentState;
             /// HOTSPOT KAYIT OLACAK
         }
         else
         {   // If we have a response and a robot is helping
             if(helperID > 0)
             {
+                qDebug()<<"5Current state :"<<this->currentState;
                 this->currentState = HS_HANDLING_HOTSPOT;
+                qDebug()<<"5Nextt state :"<<this->currentState;
 
                 helpStartTime = QDateTime::currentDateTime().toTime_t();
 
@@ -255,9 +265,14 @@ void RosThread::manageHotspot()
         if(currentTime - helpStartTime > handlingDuration)
         {
             /// HOTSPOT KAYDEDILECEK
-            hotspotList.remove(0);
+            if(this->currentState == HS_HANDLING_HOTSPOT)
+            {
+                hotspotList.remove(0);
+            }
             helperID = -1;
+            qDebug()<<"6Current state :"<<this->currentState;
             this->currentState = HS_IDLE;
+            qDebug()<<"6Next state :"<<this->currentState;
         }
 
 
@@ -271,7 +286,9 @@ void RosThread::manageHotspot()
         if(currentTime - hotspotList.at(0) > timeoutHotspot)
         {
             hotspotList.remove(0);
+            qDebug()<<"7Current state :"<<this->currentState;
             this->currentState = HS_IDLE;
+            qDebug()<<"7Next state :"<<this->currentState;
 
             return;
             /// HOTSPOT KAYIT OLACAK
@@ -291,7 +308,9 @@ void RosThread::manageHotspot()
 
                 this->messageOut.publish(helpMessage);
 
+                qDebug()<<"8Current state :"<<this->currentState;
                 this->currentState = HS_WAITING_FOR_RESPONSE;
+                qDebug()<<"8Next state :"<<this->currentState;
 
                 return;
             }
