@@ -345,6 +345,26 @@ int RosThread::getHotspot(uint timeout)
 }
 int RosThread::findHelper()
 {
+    int cntChecked = 0;
+    int cntNeigh = 0;
+    for(int i = 0; i <=numOfRobots; i++)
+    {
+        if (bin[i][3] > 0 && i != robot.robotID)
+        {
+            cntNeigh = cntNeigh + 1;
+            if (checkedNeighborList[i] == -1)
+            {
+                cntChecked = cntChecked + 1;
+            }
+        }
+    }
+    qDebug()<<"cntNeigh "<<cntNeigh<<" cntChecked "<<cntChecked;
+
+    if (cntNeigh==cntChecked)
+    {
+       clearCheckedList();
+    }
+
     int minID = -1;
     for(int i = 1; i <= numOfRobots;i++)
     {
