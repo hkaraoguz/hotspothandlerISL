@@ -15,7 +15,7 @@ RosThread::RosThread()
     this->currentState = HS_IDLE;
     helperID = -1;
     helpRequesterID = -1;
-    for(int i = 1; i < numOfRobots+1;i++){
+    for(int i = 1; i <= numOfRobots;i++){
 
         checkedNeighborList[i] = 1;
     }
@@ -125,7 +125,7 @@ void RosThread::shutdownROS()
 }
 void RosThread::clearCheckedList()
 {
-    for(int i = 0; i <=numOfRobots; i++)
+    for(int i = 1; i <=numOfRobots; i++)
     {
         checkedNeighborList[i] = 1;
     }
@@ -347,7 +347,7 @@ int RosThread::findHelper()
 {
     int cntChecked = 0;
     int cntNeigh = 0;
-    for(int i = 0; i <=numOfRobots; i++)
+    for(int i = 1; i <=numOfRobots; i++)
     {
         if (bin[i][3] > 0 && i != robot.robotID)
         {
@@ -436,8 +436,8 @@ void RosThread::handleNeighborInfo(navigationISL::neighborInfo info)
                 {
                     if(j != this->robot.robotID)
                     {
-                        bin[j][1] = 0;
-                        bin[j][2] = 0;
+                        //bin[j][1] = 0;
+                        //bin[j][2] = 0;
                         bin[j][3] = 0;
                     }
 
@@ -470,6 +470,7 @@ void RosThread::handleNeighborInfo(navigationISL::neighborInfo info)
         return;
 
     }
+
 
     str.remove("IRobot");
 
