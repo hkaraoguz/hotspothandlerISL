@@ -397,6 +397,8 @@ void RosThread::handleNeighborInfo(navigationISL::neighborInfo info)
     QString str = QString::fromStdString(info.name);
     navigationISL::neighborInfo inf = info;
 
+    qDebug()<<"info "<<str;
+
   /*  QString str = QString::fromStdString(inf.name);
 
     str.remove("IRobot");
@@ -443,28 +445,21 @@ void RosThread::handleNeighborInfo(navigationISL::neighborInfo info)
                 break;
             }
         }
+
         if(ids.size() > 0)
         {
             for(int i = 1; i <= numOfRobots; i++)
             {
-
-                for(int j = 0; j < ids.size(); j++)
-                {
-                    if(i != this->robot.robotID && i != ids.at(j))
-                    {
-                        bin[i][1] = 0;
-                        bin[i][2] = 0;
-                        bin[i][3] = 0;
-                    }
-                    else if(i == ids.at(j))
-                    {
-                        bin[i][3] = 10;
-                        /// BIN DOLDURALACAK
-                    }
-
-                }
-
+                bin[i][3] = 0;
             }
+
+            for(int j = 0; j < ids.size(); j++)
+             {
+                 bin[ids.at(j)][3] = 10;
+                  /// BIN DOLDURALACAK
+             }
+
+
         }
 
         for(int k = 1; k <= numOfRobots; k++)
