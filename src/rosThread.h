@@ -101,6 +101,8 @@ private:
 
      bool readConfigFile(QString filename);
 
+     void writeToText(int opID, int param1, int param2);
+
      double bin[numOfRobots+1][4];// positions including itself
 
      int adjM[numOfRobots+1][numOfRobots+1];

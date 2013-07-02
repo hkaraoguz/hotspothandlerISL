@@ -200,6 +200,7 @@ void RosThread::manageHotspot()
 
                 if(tempId > 0)
                 {
+                    qDebug()<<"helperID: "<< tempId ;
                     helperID = tempId;
                     navigationISL::helpMessage helpMessage;
 
@@ -235,13 +236,16 @@ void RosThread::manageHotspot()
     {
         uint currentTime = QDateTime::currentDateTime().toTime_t();
 
-        if(currentTime - hotspotList.at(0) > timeoutHotspot)
+        if(currentTime - hotspotList.at(0) >= timeoutHotspot)
         {
+            /// HOTSPOT KAYIT OLACAK
+            write(2, 0, currentTime);
+
             hotspotList.remove(0);
             qDebug()<<"4Current state :"<<this->currentState;
             this->currentState = HS_IDLE;
             qDebug()<<"4Next state :"<<this->currentState;
-            /// HOTSPOT KAYIT OLACAK
+
         }
         else
         {   // If we have a response and a robot is helping
@@ -262,13 +266,16 @@ void RosThread::manageHotspot()
     else if(this->currentState == HS_HANDLING_HOTSPOT || this->currentState == HS_HELPING)
     {
         uint currentTime = QDateTime::currentDateTime().toTime_t();
-        if(currentTime - helpStartTime > handlingDuration)
+        if(currentTime - helpStartTime >= handlingDuration)
         {
             /// HOTSPOT KAYDEDILECEK
             if(this->currentState == HS_HANDLING_HOTSPOT)
             {
+                writeToText(3, 0, currentTime);
+                writeToText(4, 0, helperID);
                 hotspotList.remove(0);
             }
+
             helperID = -1;
             qDebug()<<"6Current state :"<<this->currentState;
             this->currentState = HS_IDLE;
@@ -283,18 +290,21 @@ void RosThread::manageHotspot()
 
 
 
-        if(currentTime - hotspotList.at(0) > timeoutHotspot)
+        if(currentTime - hotspotList.at(0) >= timeoutHotspot)
         {
+            /// HOTSPOT KAYIT OLACAK
+            writeToText(2, 0, currentTime);
+
             hotspotList.remove(0);
             qDebug()<<"7Current state :"<<this->currentState;
             this->currentState = HS_IDLE;
             qDebug()<<"7Next state :"<<this->currentState;
 
             return;
-            /// HOTSPOT KAYIT OLACAK
+
         }
 
-        if(currentTime - waitingStartTime > waitingDuration)
+        if(currentTime - waitingStartTime >= waitingDuration)
         {
             int tempId = this->findHelper();
 
@@ -330,10 +340,12 @@ int RosThread::getHotspot(uint timeout)
     {
         if(currentTime-hotspotList.at(i) > 0 && currentTime-hotspotList.at(i) > timeout)
         {
+            /// HOTSPOT SAVER YAZILACAK BURAYA SILINEN HOTSPOT KAYDEDILECEK TARIHI ILE
+            writeToText(2, i, currentTime);
+
             firstSize--;
             hotspotList.remove(i);
-            i = 0;
-            /// HOTSPOT SAVER YAZILACAK BURAYA SILINEN HOTSPOT KAYDEDILECEK TARIHI ILE
+            i = 0;            
         }
         else
         {
@@ -494,14 +506,14 @@ void RosThread::handleHotspotMessage(navigationISL::hotspot msg)
 
     hotspotList.push_back(msg.hotspot);
 
+    writeToText(1,hotspotList.size()-1, 0);// write the last hotspot to the file
+
 }
 void RosThread::handlePositionInfo(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
 {
     bin[robot.robotID][1] = msg->pose.pose.position.x*100;
     bin[robot.robotID][2] = msg->pose.pose.position.y*100;
     bin[robot.robotID][3] = robot.radius;
-
-
 }
 void RosThread::handleIncomingMessage(navigationISL::helpMessage msg)
 {
@@ -541,6 +553,7 @@ bool RosThread::readInitialPoses(QString filepath)
 
         bin[count][1] = poses.at(0).toDouble();
         bin[count][2] = poses.at(1).toDouble();
+        bin[count][3] = 0;
 
         qDebug()<<"Pose "<<count<<" "<<bin[count][1]<<" "<<bin[count][2];
         count++;
@@ -608,4 +621,94 @@ bool RosThread::readConfigFile(QString filename)
 
 
 
+}
+
+
+void RosThread::writeToText(int opID, int param1, int param2)
+{
+
+    if (opID==1) // write the last hotspot
+    {
+        QFile file("../hotspots.txt");
+
+        if(!file.exists())
+        {
+            file.open(QFile::WriteOnly);
+        }
+        else
+        {
+            file.open(QFile::Append);
+
+        }
+        QTextStream stream(&file);
+
+
+        stream << hotspotList.at(param1)<<"\n";
+
+        file.close();
+
+    }
+    else if (opID==2) // write the timed-out hotspot
+    {
+        QFile file("../hotspots-timedout.txt");
+
+        if(!file.exists())
+        {
+            file.open(QFile::WriteOnly);
+        }
+        else
+        {
+            file.open(QFile::Append);
+
+        }
+        QTextStream stream(&file);
+
+
+        stream << hotspotList.at(param1)<< " " << param2 <<"\n";
+
+        file.close();
+
+    }
+    else if (opID==3) // write the handled hotspot
+    {
+        QFile file("../hotspots-handled.txt");
+
+        if(!file.exists())
+        {
+            file.open(QFile::WriteOnly);
+        }
+        else
+        {
+            file.open(QFile::Append);
+
+        }
+        QTextStream stream(&file);
+
+
+        stream << hotspotList.at(param1)<< " " << param2 <<"\n";
+
+        file.close();
+
+    }
+    else if (opID==4) // write the hotspot and its helper robot
+    {
+        QFile file("../hotspots-helperRobots.txt");
+
+        if(!file.exists())
+        {
+            file.open(QFile::WriteOnly);
+        }
+        else
+        {
+            file.open(QFile::Append);
+
+        }
+        QTextStream stream(&file);
+
+
+        stream << hotspotList.at(param1)<< " " << param2 <<"\n";
+
+        file.close();
+
+    }
 }
