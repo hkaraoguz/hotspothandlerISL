@@ -26,7 +26,6 @@ RosThread::RosThread()
 
 void RosThread::work(){
 
-
     QString pathConf = QDir::homePath();
     pathConf.append("/fuerte_workspace/sandbox/configISL.json");
 
@@ -41,8 +40,9 @@ void RosThread::work(){
         return;
     }
 
-    QString path;
-    path.append("../initialPoses.txt");
+    /*
+    QString path = QDir::homePath();
+    path.append("/fuerte_workspace/sandbox/initialPoses.txt");
     // Read initial poses otherwise quit!!
     if(!readInitialPoses(path))
     {
@@ -56,7 +56,7 @@ void RosThread::work(){
         return;
 
     }
-
+*/
 
     srand(time(0));
 
@@ -614,6 +614,35 @@ bool RosThread::readConfigFile(QString filename)
         this->robot.targetY = result["targetY"].toDouble();
 
         qDebug()<<result["targetY"].toString();
+
+
+        // initial pozisyonlar bin'e ataniyor
+
+        bin[robot.robotID][1] = this->robot.initialX;
+        bin[robot.robotID][2] = this->robot.initialY;
+        bin[robot.robotID][3] = 0;
+
+        qDebug() << "Pose "<< robot.robotID << " " << bin[robot.robotID][1] << " " << bin[robot.robotID][2] << " " << bin[robot.robotID][3];
+
+        QVariantMap nestedMap = result["Robots"].toMap();
+
+        foreach (QVariant plugin, nestedMap["Robot"].toList()) {
+
+            QString rNameStr = plugin.toMap()["name"].toString();
+
+            rNameStr.remove("IRobot");
+
+            int rID = rNameStr.toInt();
+
+            bin[rID][1] = plugin.toMap()["initialX"].toDouble();
+            bin[rID][2] = plugin.toMap()["initialY"].toDouble();
+            bin[rID][3] = 0;
+
+
+            qDebug() << "Pose " << rID << " " << bin[rID][1] << " " << bin[rID][2] << " " << bin[rID][3];
+        }
+
+
 
     }
     file.close();
