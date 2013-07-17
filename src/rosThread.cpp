@@ -656,9 +656,13 @@ bool RosThread::readConfigFile(QString filename)
 void RosThread::writeToText(int opID, int param1, int param2)
 {
 
+    QString pathConf = QDir::homePath();
+    pathConf.append("/fuerte_workspace/sandbox/");
+
     if (opID==1) // write the last hotspot
     {
-        QFile file("../hotspots.txt");
+        pathConf.append("hotspots.txt");
+        QFile file(pathConf);
 
         if(!file.exists())
         {
@@ -679,7 +683,8 @@ void RosThread::writeToText(int opID, int param1, int param2)
     }
     else if (opID==2) // write the timed-out hotspot
     {
-        QFile file("../hotspots-timedout.txt");
+        pathConf.append("hotspots-timedout.txt");
+        QFile file(pathConf);
 
         if(!file.exists())
         {
@@ -700,7 +705,8 @@ void RosThread::writeToText(int opID, int param1, int param2)
     }
     else if (opID==3) // write the handled hotspot
     {
-        QFile file("../hotspots-handled.txt");
+        pathConf.append("hotspots-handled.txt");
+        QFile file(pathConf);
 
         if(!file.exists())
         {
@@ -721,7 +727,8 @@ void RosThread::writeToText(int opID, int param1, int param2)
     }
     else if (opID==4) // write the hotspot and its helper robot
     {
-        QFile file("../hotspots-helperRobots.txt");
+        pathConf.append("hotspots-helperRobots.txt");
+        QFile file(pathConf);
 
         if(!file.exists())
         {
