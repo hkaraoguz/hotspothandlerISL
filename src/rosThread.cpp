@@ -274,9 +274,10 @@ void RosThread::manageHotspot()
                 writeToText(3, 0, currentTime);
                 writeToText(4, 0, helperID);
                 hotspotList.remove(0);
+                helperID = -1;
             }
 
-            helperID = -1;
+            //helperID = -1;
             qDebug()<<"6Current state :"<<this->currentState;
             this->currentState = HS_IDLE;
             qDebug()<<"6Next state :"<<this->currentState;
