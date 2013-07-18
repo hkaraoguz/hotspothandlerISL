@@ -528,8 +528,11 @@ void RosThread::handleIncomingMessage(navigationISL::helpMessage msg)
     }
     else if(msg.messageid == HMT_NOT_HELPING)
     {
-        helperID = -1;
-        checkedNeighborList[msg.robotid] = -1;
+        if (this->currentState!=HS_HANDLING_HOTSPOT){
+            helperID = -1;
+            checkedNeighborList[msg.robotid] = -1;
+        }
+
     }
 
 
