@@ -67,10 +67,10 @@ void RosThread::work(){
         {
             adjM[i][j] = 0;
         }
-       // bin[i][1] = rand()%300;
-       // bin[i][2] = rand()%300;
+        // bin[i][1] = rand()%300;
+        // bin[i][2] = rand()%300;
 
-      //  qDebug()<<bin[i][1]<<" "<<bin[i][2];
+        //  qDebug()<<bin[i][1]<<" "<<bin[i][2];
 
     }
 
@@ -143,7 +143,6 @@ void RosThread::manageHotspot()
         if(helpRequesterID > 0)
         {
 
-
             navigationISL::helpMessage helpMessage;
 
             helpMessage.robotid = helpRequesterID;
@@ -194,39 +193,36 @@ void RosThread::manageHotspot()
         if(hotspotId >= 0)
         {
 
+            int tempId = this->findHelper();
 
+            if(tempId > 0)
+            {
+                qDebug()<<"helperID: "<< tempId ;
+                //helperID = tempId;
+                navigationISL::helpMessage helpMessage;
 
-                int tempId = this->findHelper();
+                helpMessage.robotid = tempId;//helperID;
+                helpMessage.messageid = HMT_HELP_REQUEST;
 
-                if(tempId > 0)
-                {
-                    qDebug()<<"helperID: "<< tempId ;
-                    helperID = tempId;
-                    navigationISL::helpMessage helpMessage;
+                this->messageOut.publish(helpMessage);
 
-                    helpMessage.robotid = helperID;
-                    helpMessage.messageid = HMT_HELP_REQUEST;
+                qDebug()<<"2Current state :"<<this->currentState;
+                this->currentState = HS_WAITING_FOR_RESPONSE;
+                qDebug()<<"2Next state :"<<this->currentState;
 
-                    this->messageOut.publish(helpMessage);
+                waitingStartTime = QDateTime::currentDateTime().toTime_t();
 
-                    qDebug()<<"2Current state :"<<this->currentState;
-                    this->currentState = HS_WAITING_FOR_RESPONSE;
-                    qDebug()<<"2Next state :"<<this->currentState;
+                return;
+            }
+            else
+            {
+                waitingStartTime = QDateTime::currentDateTime().toTime_t();
 
-                    return;
-                }
-                else
-                {
-                    waitingStartTime = QDateTime::currentDateTime().toTime_t();
+                qDebug()<<"3Current state :"<<this->currentState;
+                this->currentState = HS_WAITING_FOR_HELP;
+                qDebug()<<"3Next state :"<<this->currentState;
 
-                    qDebug()<<"3Current state :"<<this->currentState;
-                    this->currentState = HS_WAITING_FOR_HELP;
-                    qDebug()<<"3Next state :"<<this->currentState;
-
-                }
-
-
-
+            }
 
         }
 
@@ -259,9 +255,37 @@ void RosThread::manageHotspot()
 
                 clearCheckedList();
             }
+            else
+            {
+                if(currentTime - waitingStartTime >= waitingDuration)
+                {
+                    int tempId = this->findHelper();
+
+                    if(tempId > 0)
+                    {
+                        //helperID = tempId;
+                        navigationISL::helpMessage helpMessage;
+
+                        helpMessage.robotid = tempId;//helperID;
+                        helpMessage.messageid = HMT_HELP_REQUEST;
+
+                        this->messageOut.publish(helpMessage);
+
+                        qDebug()<<"8Current state :"<<this->currentState;
+                        this->currentState = HS_WAITING_FOR_RESPONSE;
+                        qDebug()<<"8Next state :"<<this->currentState;
+
+                        waitingStartTime = currentTime;
+
+                        return;
+                    }
+
+
+                }
+
+            }
 
         }
-
     }
     else if(this->currentState == HS_HANDLING_HOTSPOT || this->currentState == HS_HELPING)
     {
@@ -289,8 +313,6 @@ void RosThread::manageHotspot()
     {
         uint currentTime = QDateTime::currentDateTime().toTime_t();
 
-
-
         if(currentTime - hotspotList.at(0) >= timeoutHotspot)
         {
             /// HOTSPOT KAYIT OLACAK
@@ -311,10 +333,10 @@ void RosThread::manageHotspot()
 
             if(tempId > 0)
             {
-                helperID = tempId;
+                //helperID = tempId;
                 navigationISL::helpMessage helpMessage;
 
-                helpMessage.robotid = helperID;
+                helpMessage.robotid = tempId;//helperID;
                 helpMessage.messageid = HMT_HELP_REQUEST;
 
                 this->messageOut.publish(helpMessage);
@@ -322,6 +344,8 @@ void RosThread::manageHotspot()
                 qDebug()<<"8Current state :"<<this->currentState;
                 this->currentState = HS_WAITING_FOR_RESPONSE;
                 qDebug()<<"8Next state :"<<this->currentState;
+
+                waitingStartTime = currentTime;
 
                 return;
             }
@@ -331,6 +355,7 @@ void RosThread::manageHotspot()
         }
     }
 }
+
 int RosThread::getHotspot(uint timeout)
 {
     uint currentTime = QDateTime::currentDateTime().toTime_t();
@@ -346,7 +371,7 @@ int RosThread::getHotspot(uint timeout)
 
             firstSize--;
             hotspotList.remove(i);
-            i = 0;            
+            i = 0;
         }
         else
         {
@@ -375,7 +400,7 @@ int RosThread::findHelper()
 
     if (cntNeigh==cntChecked)
     {
-       clearCheckedList();
+        clearCheckedList();
     }
 
     int minID = -1;
@@ -412,7 +437,7 @@ void RosThread::handleNeighborInfo(navigationISL::neighborInfo info)
 
     qDebug()<<"info "<<str;
 
-  /*  QString str = QString::fromStdString(inf.name);
+    /*  QString str = QString::fromStdString(inf.name);
 
     str.remove("IRobot");
 
@@ -426,7 +451,7 @@ void RosThread::handleNeighborInfo(navigationISL::neighborInfo info)
 
     dataReceived[id] = true;*/
 
-   if(str.contains("Neighbors"))
+    if(str.contains("Neighbors"))
     {
         QStringList list = str.split(";");
 
@@ -467,10 +492,10 @@ void RosThread::handleNeighborInfo(navigationISL::neighborInfo info)
             }
 
             for(int j = 0; j < ids.size(); j++)
-             {
-                 bin[ids.at(j)][3] = 10;
-                  /// BIN DOLDURALACAK
-             }
+            {
+                bin[ids.at(j)][3] = 10;
+                /// BIN DOLDURALACAK
+            }
 
 
         }
